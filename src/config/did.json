@@ -1,0 +1,4 @@
+{
+    "secret": "iamwise",
+    "NEXT_PUBLIC_BASEURL": "http://localhost:3000"
+}
