@@ -11,6 +11,9 @@ export class User {
   @Column({ nullable: true, type: 'text' })
   accountPassword: string;
 
+  @Column({ nullable: true, unique: true})
+  accountNumber: string;
+
   @Column({ nullable: true })
   initialDeposit: number;
 }
