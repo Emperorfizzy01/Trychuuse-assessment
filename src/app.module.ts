@@ -22,7 +22,7 @@ import { UserModule } from './user/user.module';
         synchronize: true,
       }),
     }),
-    JwtModule.register({ secret: config.secret }),
+    
   ],
   controllers: [],
   providers: [],

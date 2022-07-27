@@ -5,8 +5,8 @@ import { User } from './entities/user.entity';
 import { UserInterface } from './interface/user.interface';
 import { Errormessage } from 'src/Errormessage';
 import { CreateUserDto } from './dto/user.dto';
-// import sgMail from '@sendgrid/mail';
-import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
 
 
 function numberGenerator() {
@@ -34,8 +34,10 @@ export class UserService {
                     initialDeposit: userDto.initialDeposit,
                     accountNumber: numberGenerator().toString()
                  })
-                 const newUser = await this.userModel.save(user);
-                 console.log(newUser);
+                const saltRounds = await bcrypt.genSalt(10)
+                const hashPassword = await bcrypt.hash(user.accountPassword, saltRounds)
+                user.accountPassword = hashPassword
+                const newUser = await this.userModel.save(user);
                  return {
                     responseCode: 201,
                     success: true,
@@ -49,4 +51,29 @@ export class UserService {
             throw err
         }
     }
+
+    async login(userDto: CreateUserDto): Promise<any> {
+        try {
+            const userExist = await this.userModel.findOneBy({
+                accountName: userDto.accountName.toLowerCase(),
+            })
+            if(!userExist) throw new NotFoundException(Errormessage.IncorrectData);
+            const match = await bcrypt.compare(userDto.accountPassword, userExist.accountPassword)
+            if(!match) throw new NotFoundException(Errormessage.IncorrectData);
+            // Create a token
+            const payload = { id: userExist.id, accountName: userExist.accountName };
+            const options = { expiresIn: '2d' };
+            const secret = process.env.JWT_SECRET;
+            const token = jwt.sign(payload, secret, options)
+            return { 
+                success: true, 
+                accessToken: token 
+            };
+        } catch (err) {
+            throw err
+        }
+    }
 }
+
+
+

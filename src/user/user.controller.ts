@@ -12,8 +12,8 @@ export class UserController {
     return this.service.createAccount(createDto);
   }
 
-//   @Post('/verify')
-//   login(@Body() createDto: CreateUserDto): Promise<any> {
-//     return this.service.verifyUser(createDto);
-//   }
+  @Post('/login')
+  login(@Body() createDto: CreateUserDto): Promise<any> {
+    return this.service.login(createDto);
+  }
 }
