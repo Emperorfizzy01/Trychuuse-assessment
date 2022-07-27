@@ -3,5 +3,5 @@ export class  UserInterface {
     accountName: string;
     accountPassword: string;
     accountNumber: number;
-    initialDeposit: number
+    balance: number
 }

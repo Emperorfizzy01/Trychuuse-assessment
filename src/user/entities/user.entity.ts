@@ -15,5 +15,5 @@ export class User {
   accountNumber: string;
 
   @Column({ nullable: true })
-  initialDeposit: number;
+   balance: number;
 }

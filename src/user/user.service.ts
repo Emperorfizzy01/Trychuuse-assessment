@@ -21,6 +21,7 @@ export class UserService {
       ) {}
     async createAccount(userDto: CreateUserDto): Promise<any> {
         try {
+
            const userExist = await this.userModel.findOneBy({
                accountName: userDto.accountName.toLowerCase(),
            })
@@ -31,7 +32,7 @@ export class UserService {
                 const user = this.userModel.create({
                     accountName: userDto.accountName.toLowerCase(),
                     accountPassword: userDto.accountPassword,
-                    initialDeposit: userDto.initialDeposit,
+                    balance: userDto.initialDeposit,
                     accountNumber: numberGenerator().toString()
                  })
                 const saltRounds = await bcrypt.genSalt(10)
@@ -42,7 +43,6 @@ export class UserService {
                     responseCode: 201,
                     success: true,
                     message: 'Account successfully created',
-                    newUser: newUser,
                  }
             } 
            }
@@ -61,7 +61,7 @@ export class UserService {
             const match = await bcrypt.compare(userDto.accountPassword, userExist.accountPassword)
             if(!match) throw new NotFoundException(Errormessage.IncorrectData);
             // Create a token
-            const payload = { id: userExist.id, accountName: userExist.accountName };
+            const payload = { id: userExist.id, accountNumber: userExist.accountNumber};
             const options = { expiresIn: '2d' };
             const secret = process.env.JWT_SECRET;
             const token = jwt.sign(payload, secret, options)
@@ -69,6 +69,35 @@ export class UserService {
                 success: true, 
                 accessToken: token 
             };
+        } catch (err) {
+            throw err
+        }
+    }
+
+    async withdraw(userDto: CreateUserDto, token: string): Promise<any> {
+        try {
+            // @ts-ignore
+            const { accountNumber }  = jwt.verify(token, process.env.JWT_SECRET);
+            if(accountNumber === userDto.accountNumber) {
+                const userExist = await this.userModel.findOneBy({
+                         accountNumber: userDto.accountNumber
+                })
+                const match = await bcrypt.compare(userDto.accountPassword, userExist.accountPassword) 
+                if(!match) throw new NotFoundException(Errormessage.IncorrectData);
+                if(userExist.balance - userDto.withdraw < 500) {
+                    throw new NotFoundException(Errormessage.InsufficientBalance)
+                } else {
+                    const newBalance = userExist.balance - userDto.withdraw
+                    userExist.balance = newBalance
+                    const updatedUser = await this.userModel.save(userExist);
+                    return {
+                        responseCode: 200,
+                        success: true,
+                        message: "Withdrawal successful"
+                    }
+                }
+            }
+            throw new NotFoundException(Errormessage.InvalidToken);
         } catch (err) {
             throw err
         }
