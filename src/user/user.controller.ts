@@ -21,4 +21,9 @@ export class UserController {
   withdraw(@Headers('token')token: string, @Body() createDto: CreateUserDto, ) {
     return this.service.withdraw(createDto, token);
   }
+
+  @Post('/deposit')
+  deposit(@Body() createDto: CreateUserDto): Promise<any> {
+    return this.service.deposit(createDto);
+  }
 }

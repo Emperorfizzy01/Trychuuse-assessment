@@ -29,4 +29,22 @@ export const Errormessage = {
         apiErrorCode: '403',
         errorMessage: "Available balance can't be less than 500"
     },
+
+    minimumWithdrawal: {
+        success: false,
+        apiErrorCode: '403',
+        errorMessage: "Minimum withdrawal can't be less than 1naira'"
+    },
+
+    transferrableAmount: {
+        success: false,
+        apiErrorCode: '403',
+        errorMessage: 'Maximum transfer is 1,000,000 and minimum transfer is 100'
+    },
+
+    unknownUser: {
+        success: false,
+        apiErrorCode: '403',
+        errorMessage: 'No user is associated with such account number'
+    }
 }

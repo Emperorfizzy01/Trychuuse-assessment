@@ -5,5 +5,6 @@ export class CreateUserDto {
     readonly accountNumber: string;
     readonly initialDeposit: number;
     readonly withdraw: number;
+    readonly amount: number;
     readonly balance: number;
 }

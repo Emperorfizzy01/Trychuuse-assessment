@@ -84,6 +84,7 @@ export class UserService {
                 })
                 const match = await bcrypt.compare(userDto.accountPassword, userExist.accountPassword) 
                 if(!match) throw new NotFoundException(Errormessage.IncorrectData);
+                if(userDto.withdraw < 1) throw new NotFoundException(Errormessage.minimumWithdrawal)
                 if(userExist.balance - userDto.withdraw < 500) {
                     throw new NotFoundException(Errormessage.InsufficientBalance)
                 } else {
@@ -101,6 +102,24 @@ export class UserService {
         } catch (err) {
             throw err
         }
+    }
+
+    async deposit(userDto: CreateUserDto): Promise<any> {
+        const user = await this.userModel.findOneBy({
+            accountNumber: userDto.accountNumber
+        })
+        if(user) {
+            if(userDto.amount > 1000000 || userDto.amount < 100) throw new NotFoundException(Errormessage.transferrableAmount)
+            const newBalance = user.balance + userDto.amount
+            user.balance = newBalance
+            const updatedBalance = await this.userModel.save(user)
+            return { 
+                responseCode: 200,
+                success: true,
+                message: "Transfer successful"
+            }
+        }
+        throw new NotFoundException(Errormessage.unknownUser);
     }
 }
 
