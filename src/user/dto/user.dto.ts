@@ -7,4 +7,5 @@ export class CreateUserDto {
     readonly withdraw: number;
     readonly amount: number;
     readonly balance: number;
+    readonly narration: string;
 }

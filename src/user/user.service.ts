@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, getRepository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { Transaction } from './entities/transaction.entity';
 import { UserInterface } from './interface/user.interface';
 import { Errormessage } from 'src/Errormessage';
 import { CreateUserDto } from './dto/user.dto';
@@ -18,14 +19,10 @@ function numberGenerator() {
 export class UserService {
     constructor(
         @InjectRepository(User) private readonly userModel: Repository<User>,
+        @InjectRepository(Transaction) private readonly transactionModel: Repository<Transaction>,
       ) {}
     async createAccount(userDto: CreateUserDto): Promise<any> {
-        try {
-
-           const userExist = await this.userModel.findOneBy({
-               accountName: userDto.accountName.toLowerCase(),
-           })
-           if(!userExist) {
+        try {      
             if(userDto.initialDeposit < 500) {
                 throw new NotFoundException(Errormessage.InsufficientDeposit)
             } else {
@@ -45,8 +42,6 @@ export class UserService {
                     message: 'Account successfully created',
                  }
             } 
-           }
-           throw new NotFoundException(Errormessage.UserExist)
         } catch(err) {
             throw err
         }
@@ -90,8 +85,17 @@ export class UserService {
                     throw new NotFoundException(Errormessage.InsufficientBalance)
                 } else {
                     const newBalance = userExist.balance - userDto.withdraw
+                    const transaction = this.transactionModel.create({
+                        transactionDate: new Date(Date.now()),
+                        narration: userDto.narration,
+                        transactionType: "withdrawal",
+                        accountNumber: userDto.accountNumber,
+                        accountBalance: newBalance,
+                        amount: userDto.withdraw
+                    })
                     userExist.balance = newBalance
                     const updatedUser = await this.userModel.save(userExist);
+                    const transactionSuccess = await this.transactionModel.save(transaction);
                     return {
                         responseCode: 200,
                         success: true,
@@ -105,6 +109,7 @@ export class UserService {
         }
     }
 
+    // narration included
     async deposit(userDto: CreateUserDto): Promise<any> {
         const user = await this.userModel.findOneBy({
             accountNumber: userDto.accountNumber
@@ -112,8 +117,17 @@ export class UserService {
         if(user) {
             if(userDto.amount > 1000000 || userDto.amount < 100) throw new NotFoundException(Errormessage.transferrableAmount)
             const newBalance = user.balance + userDto.amount
+            const transaction = this.transactionModel.create({
+                transactionDate: new Date(Date.now()),
+                narration: userDto.narration,
+                transactionType: "deposit",
+                accountNumber: userDto.accountNumber,
+                accountBalance: newBalance,
+                amount: userDto.amount
+            })
             user.balance = newBalance
             const updatedBalance = await this.userModel.save(user)
+            const transactionSuccess = await this.transactionModel.save(transaction);
             return { 
                 responseCode: 200,
                 success: true,
@@ -123,7 +137,7 @@ export class UserService {
         throw new NotFoundException(Errormessage.unknownUser);
     }
 
-    async accountInfo(token: string, userAccountNumber: any): Promise<any> {
+    async accountInfo(token: string, userAccountNumber: string): Promise<any> {
         // @ts-ignore
         const { accountNumber } = jwt.verify(token, process.env.JWT_SECRET);
         if(accountNumber === userAccountNumber) {
@@ -143,6 +157,29 @@ export class UserService {
         }
         }
         throw new NotFoundException(Errormessage.InvalidToken);
+    }
+
+    async getStatement(token: string, userAccountNumber: string): Promise<any> {
+        // @ts-ignore
+        const { accountNumber } = jwt.verify(token, process.env.JWT_SECRET);
+        if(accountNumber === userAccountNumber) {
+            const userExist = await this.userModel.findOneBy({
+                accountNumber: userAccountNumber
+       })
+       if(!userExist) throw new NotFoundException(Errormessage.IncorrectData);
+       const transactions = await this.transactionModel.find({
+            where: {accountNumber: userAccountNumber}
+       })
+       if(!transactions) throw new NotFoundException(Errormessage.noTransaction)
+       return transactions.map(({transactionType, transactionDate, narration, amount, accountBalance})=>{ 
+
+        return {transactionType, transactionDate, narration, amount, accountBalance};
+      
+      });
+        } else {
+            throw new NotFoundException(Errormessage.InvalidToken);
+        }
+       
     }
 }
 

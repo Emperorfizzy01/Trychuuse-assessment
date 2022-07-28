@@ -46,5 +46,12 @@ export const Errormessage = {
         success: false,
         apiErrorCode: '403',
         errorMessage: 'No user is associated with such account number'
-    }
+    },
+
+    noTransaction: {
+        success: false,
+        apiErrorCode: '403',
+        errorMessage: "Transaction haven't occurred on your account yet"
+    },
+
 }

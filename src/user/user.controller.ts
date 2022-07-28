@@ -29,7 +29,12 @@ export class UserController {
 
   @Get('/account_info/:userAccountNumber')
   accountInfo(@Headers('token') token: string,  @Param('userAccountNumber') userAccountNumber: string): Promise<any> {
-    console.log(userAccountNumber)
     return this.service.accountInfo(token, userAccountNumber);
   }
+
+  @Get('/account_statement/:userAccountNumber')
+  accountStatement(@Headers('token') token: string,  @Param('userAccountNumber') userAccountNumber: string): Promise<any> {
+    return this.service.getStatement(token, userAccountNumber);
+  }
+
 }
