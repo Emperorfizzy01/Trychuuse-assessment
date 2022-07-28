@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Headers } from '@nestjs/common';
+import { Body, Controller, Post, Headers, Get, Param } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/user.dto';
 import { UserInterface } from './interface/user.interface';
@@ -25,5 +25,11 @@ export class UserController {
   @Post('/deposit')
   deposit(@Body() createDto: CreateUserDto): Promise<any> {
     return this.service.deposit(createDto);
+  }
+
+  @Get('/account_info/:userAccountNumber')
+  accountInfo(@Headers('token') token: string,  @Param('userAccountNumber') userAccountNumber: string): Promise<any> {
+    console.log(userAccountNumber)
+    return this.service.accountInfo(token, userAccountNumber);
   }
 }

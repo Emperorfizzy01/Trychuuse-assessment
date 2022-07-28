@@ -82,6 +82,7 @@ export class UserService {
                 const userExist = await this.userModel.findOneBy({
                          accountNumber: userDto.accountNumber
                 })
+                if(!userExist) throw new NotFoundException(Errormessage.IncorrectData);
                 const match = await bcrypt.compare(userDto.accountPassword, userExist.accountPassword) 
                 if(!match) throw new NotFoundException(Errormessage.IncorrectData);
                 if(userDto.withdraw < 1) throw new NotFoundException(Errormessage.minimumWithdrawal)
@@ -120,6 +121,28 @@ export class UserService {
             }
         }
         throw new NotFoundException(Errormessage.unknownUser);
+    }
+
+    async accountInfo(token: string, userAccountNumber: any): Promise<any> {
+        // @ts-ignore
+        const { accountNumber } = jwt.verify(token, process.env.JWT_SECRET);
+        if(accountNumber === userAccountNumber) {
+            const userExist = await this.userModel.findOneBy({
+                accountNumber: userAccountNumber
+       })
+       if(!userExist) throw new NotFoundException(Errormessage.IncorrectData);
+        return {
+            responseCode: 200,
+            success: true,
+            message: "Account info fetched",
+            account: {
+               accountName: userExist.accountName,
+               accountNumber: userExist.accountNumber,
+               balance: userExist.balance
+            }
+        }
+        }
+        throw new NotFoundException(Errormessage.InvalidToken);
     }
 }
 
