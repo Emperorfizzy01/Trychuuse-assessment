@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, getRepository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { Transaction } from './entities/transaction.entity';
-import { UserInterface } from './interface/user.interface';
 import { Errormessage } from 'src/Errormessage';
 import { CreateUserDto } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
@@ -22,26 +21,32 @@ export class UserService {
         @InjectRepository(Transaction) private readonly transactionModel: Repository<Transaction>,
       ) {}
     async createAccount(userDto: CreateUserDto): Promise<any> {
-        try {      
-            if(userDto.initialDeposit < 500) {
-                throw new NotFoundException(Errormessage.InsufficientDeposit)
-            } else {
-                const user = this.userModel.create({
-                    accountName: userDto.accountName.toLowerCase(),
-                    accountPassword: userDto.accountPassword,
-                    balance: userDto.initialDeposit,
-                    accountNumber: numberGenerator().toString()
-                 })
-                const saltRounds = await bcrypt.genSalt(10)
-                const hashPassword = await bcrypt.hash(user.accountPassword, saltRounds)
-                user.accountPassword = hashPassword
-                const newUser = await this.userModel.save(user);
-                 return {
-                    responseCode: 201,
-                    success: true,
-                    message: 'Account successfully created',
-                 }
-            } 
+        try {   
+            const userExist = await this.userModel.findOneBy({
+                accountName: userDto.accountName.toLowerCase()
+            })
+            if(!userExist) {
+                if(userDto.initialDeposit < 500) {
+                    throw new NotFoundException(Errormessage.InsufficientDeposit)
+                } else {
+                    const user = this.userModel.create({
+                        accountName: userDto.accountName.toLowerCase(),
+                        accountPassword: userDto.accountPassword,
+                        balance: userDto.initialDeposit,
+                        accountNumber: numberGenerator().toString()
+                     })
+                    const saltRounds = await bcrypt.genSalt(10)
+                    const hashPassword = await bcrypt.hash(user.accountPassword, saltRounds)
+                    user.accountPassword = hashPassword
+                    const newUser = await this.userModel.save(user);
+                     return {
+                        responseCode: 201,
+                        success: true,
+                        message: 'Account successfully created',
+                     }
+                } 
+            }
+            throw new NotFoundException(Errormessage.UserExist)
         } catch(err) {
             throw err
         }
@@ -50,7 +55,7 @@ export class UserService {
     async login(userDto: CreateUserDto): Promise<any> {
         try {
             const userExist = await this.userModel.findOneBy({
-                accountName: userDto.accountName.toLowerCase(),
+                accountNumber: userDto.accountNumber
             })
             if(!userExist) throw new NotFoundException(Errormessage.IncorrectData);
             const match = await bcrypt.compare(userDto.accountPassword, userExist.accountPassword)
@@ -182,6 +187,4 @@ export class UserService {
        
     }
 }
-
-
 

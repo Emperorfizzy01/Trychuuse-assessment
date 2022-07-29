@@ -15,7 +15,7 @@ export const Errormessage = {
     IncorrectData: {
         success: false,
         apiErrorCode: '401',
-        errorMessage: 'Account name or password incorrect'
+        errorMessage: 'Account number or password incorrect'
     },
 
     InvalidToken: {

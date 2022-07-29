@@ -8,7 +8,7 @@ export class UserController {
   constructor(private service: UserService) {}
 
   @Post('/create_account')
-  create(@Body() createDto: CreateUserDto): Promise<UserInterface> {
+  createAccount(@Body() createDto: CreateUserDto): Promise<UserInterface> {
     return this.service.createAccount(createDto);
   }
 
@@ -33,7 +33,7 @@ export class UserController {
   }
 
   @Get('/account_statement/:userAccountNumber')
-  accountStatement(@Headers('token') token: string,  @Param('userAccountNumber') userAccountNumber: string): Promise<any> {
+  getStatement(@Headers('token') token: string,  @Param('userAccountNumber') userAccountNumber: string): Promise<any> {
     return this.service.getStatement(token, userAccountNumber);
   }
 
